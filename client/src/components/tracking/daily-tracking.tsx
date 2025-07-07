@@ -1,5 +1,5 @@
-import { Plus, Check, Lightbulb } from "lucide-react";
-import { useState } from "react";
+import { Plus, Check, Lightbulb, ChevronDown, Droplets } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { getHealthRecommendations } from "@/lib/health-recommendations";
@@ -10,6 +10,15 @@ interface DailyTrackingProps {
   waterGoal?: number;
   onUpdateLog: (updates: Partial<DailyLog>) => void;
 }
+
+const glassOptions = [
+  { size: 150, label: "Small Glass (150ml)" },
+  { size: 200, label: "Regular Glass (200ml)" },
+  { size: 250, label: "Large Glass (250ml)" },
+  { size: 300, label: "Water Bottle (300ml)" },
+  { size: 500, label: "Large Bottle (500ml)" },
+  { size: 750, label: "Big Bottle (750ml)" }
+];
 
 const moods = [
   { emoji: "😊", value: "happy", label: "Happy" },
@@ -34,14 +43,34 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(
     dailyLog?.symptoms || []
   );
+  const [selectedGlassSize, setSelectedGlassSize] = useState(250); // Default 250ml
+  const [showGlassOptions, setShowGlassOptions] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const waterIntake = dailyLog?.waterIntake || 0;
+  // Convert waterIntake from glasses to ml (assuming 250ml per glass if stored as glasses)
+  const totalWaterMl = dailyLog?.waterIntake ? dailyLog.waterIntake * 250 : 0;
+  const waterGoalMl = waterGoal * 250; // Goal in ml
   const mood = dailyLog?.mood;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowGlassOptions(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   
   const addWater = () => {
-    if (waterIntake < waterGoal) {
-      onUpdateLog({ waterIntake: waterIntake + 1 });
-    }
+    // Convert the new total ml to glasses for storage
+    const newTotalMl = totalWaterMl + selectedGlassSize;
+    const newGlassCount = Math.round(newTotalMl / 250); // Convert back to glasses for storage
+    onUpdateLog({ waterIntake: newGlassCount });
   };
   
   const selectMood = (moodValue: string) => {
@@ -57,7 +86,7 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
     onUpdateLog({ symptoms: newSymptoms });
   };
   
-  const waterPercentage = (waterIntake / waterGoal) * 100;
+  const waterPercentage = (totalWaterMl / waterGoalMl) * 100;
   const recommendations = getHealthRecommendations(selectedSymptoms);
 
   return (
@@ -69,25 +98,75 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+              <Droplets className="w-5 h-5 text-blue-500" />
             </div>
             <div>
               <p className="font-medium text-gray-800">Water Intake</p>
               <p className="text-sm text-gray-600">
-                {waterIntake} of {waterGoal} glasses
+                {totalWaterMl}ml of {waterGoalMl}ml ({Math.round(totalWaterMl / 250)} glasses)
               </p>
             </div>
           </div>
+        </div>
+        
+        {/* Glass Size Selector */}
+        <div className="mb-3">
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowGlassOptions(!showGlassOptions)}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg border text-sm"
+            >
+              <span>Add: {selectedGlassSize}ml</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${showGlassOptions ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {showGlassOptions && (
+              <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-lg z-10 mt-1">
+                {glassOptions.map((option) => (
+                  <button
+                    key={option.size}
+                    onClick={() => {
+                      setSelectedGlassSize(option.size);
+                      setShowGlassOptions(false);
+                    }}
+                    className={`w-full text-left p-3 hover:bg-gray-50 text-sm ${
+                      selectedGlassSize === option.size ? 'bg-blue-50 text-blue-600' : ''
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 mb-3">
           <Button
             onClick={addWater}
             size="sm"
-            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full w-8 h-8 p-0"
-            disabled={waterIntake >= waterGoal}
+            className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+            disabled={totalWaterMl >= waterGoalMl}
           >
             <Plus size={16} />
+            Add {selectedGlassSize}ml
           </Button>
+          {totalWaterMl > 0 && (
+            <Button
+              onClick={() => onUpdateLog({ waterIntake: 0 })}
+              size="sm"
+              variant="outline"
+              className="text-gray-600"
+            >
+              Reset
+            </Button>
+          )}
         </div>
+        
         <Progress value={waterPercentage} className="h-2" />
+        <p className="text-xs text-gray-500 mt-1">
+          {waterPercentage >= 100 ? "Goal achieved! 🎉" : `${Math.round(100 - waterPercentage)}% remaining`}
+        </p>
       </div>
 
       {/* Mood Tracking */}
