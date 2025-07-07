@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, Calendar, Target, Activity } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
+import { PatternRecognition } from "@/components/insights/pattern-recognition";
 import { useAuth } from "@/lib/auth";
 import type { Cycle, DailyLog, Prediction } from "@shared/schema";
 
@@ -66,6 +67,9 @@ export default function Insights() {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Insights</h2>
           <p className="text-gray-600">Your health patterns and trends</p>
         </div>
+
+        {/* Pattern Recognition - Shows after 2-3 months of tracking */}
+        <PatternRecognition cycles={cycles} />
 
         {/* Cycle Statistics */}
         <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
