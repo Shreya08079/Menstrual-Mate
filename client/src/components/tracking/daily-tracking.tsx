@@ -22,10 +22,10 @@ const glassOptions = [
 
 const moods = [
   { emoji: "😊", value: "happy", label: "Happy" },
-  { emoji: "😐", value: "neutral", label: "Neutral" },
   { emoji: "😢", value: "sad", label: "Sad" },
+  { emoji: "😠", value: "angry", label: "Angry" },
   { emoji: "😴", value: "tired", label: "Tired" },
-  { emoji: "😣", value: "pain", label: "Pain" },
+  { emoji: "😰", value: "anxious", label: "Anxious" },
 ];
 
 const symptoms = [
@@ -84,6 +84,17 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
   
   const selectMood = (moodValue: string) => {
     onUpdateLog({ mood: moodValue });
+  };
+
+  const getMoodRecommendation = (moodValue: string) => {
+    const recommendations = {
+      happy: "Keep that positive energy flowing! Maybe share your happiness with someone special or treat yourself to something nice.",
+      sad: "It's okay to feel sad sometimes. Try listening to your favorite music, calling a friend, or doing something that usually makes you smile.",
+      angry: "Take a deep breath and go for a walk, eat your favorite food, or binge-watch your favorite show (we recommend watching Friends!).",
+      tired: "Your body is telling you something important - go get some rest! A good nap or early bedtime will help you feel refreshed.",
+      anxious: "Try some deep breathing exercises, gentle stretching, or meditation. Remember, this feeling will pass."
+    };
+    return recommendations[moodValue as keyof typeof recommendations] || "";
   };
   
   const toggleSymptom = (symptom: string) => {
@@ -197,6 +208,23 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
             </button>
           ))}
         </div>
+        
+        {/* Mood Recommendation */}
+        {mood && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-lg">💝</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-800 mb-2">Just for you:</h4>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {getMoodRecommendation(mood)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Symptoms */}
