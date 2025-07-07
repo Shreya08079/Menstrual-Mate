@@ -49,8 +49,8 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
   const [hasShownCelebration, setHasShownCelebration] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Convert waterIntake from glasses to ml (assuming 250ml per glass if stored as glasses)
-  const totalWaterMl = dailyLog?.waterIntake ? dailyLog.waterIntake * 250 : 0;
+  // Water intake is stored directly in ml
+  const totalWaterMl = dailyLog?.waterIntake || 0;
   const waterGoalMl = 3000; // 3L goal in ml
   const mood = dailyLog?.mood;
 
@@ -69,10 +69,10 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
   }, []);
   
   const addWater = () => {
-    // Convert the new total ml to glasses for storage
+    // Store water intake directly in ml
     const newTotalMl = totalWaterMl + selectedGlassSize;
-    const newGlassCount = Math.round(newTotalMl / 250); // Convert back to glasses for storage
-    onUpdateLog({ waterIntake: newGlassCount });
+    console.log("Adding water:", selectedGlassSize, "ml. New total:", newTotalMl);
+    onUpdateLog({ waterIntake: newTotalMl });
     
     // Check if goal is achieved and show celebration
     if (newTotalMl >= waterGoalMl && !hasShownCelebration) {
@@ -83,6 +83,7 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
   };
   
   const selectMood = (moodValue: string) => {
+    console.log("Mood selected:", moodValue);
     onUpdateLog({ mood: moodValue });
   };
 
@@ -174,7 +175,10 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
           </Button>
           {totalWaterMl > 0 && (
             <Button
-              onClick={() => onUpdateLog({ waterIntake: 0 })}
+              onClick={() => {
+                onUpdateLog({ waterIntake: 0 });
+                setHasShownCelebration(false);
+              }}
               size="sm"
               variant="outline"
               className="text-gray-600"
