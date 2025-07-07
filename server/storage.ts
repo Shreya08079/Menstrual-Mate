@@ -4,6 +4,8 @@ import {
   type DailyLog, type InsertDailyLog, type Prediction, type InsertPrediction,
   type JournalEntry, type InsertJournalEntry, type UserSettings, type InsertUserSettings
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // User management
@@ -44,230 +46,178 @@ export interface IStorage {
   updateUserSettings(userId: number, settings: Partial<InsertUserSettings>): Promise<UserSettings | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private cycles: Map<number, Cycle>;
-  private dailyLogs: Map<number, DailyLog>;
-  private predictions: Map<number, Prediction>;
-  private journalEntries: Map<number, JournalEntry>;
-  private userSettings: Map<number, UserSettings>;
-  private currentId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.cycles = new Map();
-    this.dailyLogs = new Map();
-    this.predictions = new Map();
-    this.journalEntries = new Map();
-    this.userSettings = new Map();
-    this.currentId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      profilePicture: insertUser.profilePicture || null,
-      createdAt: new Date().toISOString().split('T')[0] 
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
-  async updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined> {
-    const existingUser = this.users.get(id);
-    if (!existingUser) return undefined;
-    
-    const updatedUser = { ...existingUser, ...user };
-    this.users.set(id, updatedUser);
-    return updatedUser;
+  async updateUser(id: number, userUpdates: Partial<InsertUser>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(userUpdates)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
   }
 
   async getCycles(userId: number): Promise<Cycle[]> {
-    return Array.from(this.cycles.values()).filter(cycle => cycle.userId === userId);
+    return await db.select().from(cycles).where(eq(cycles.userId, userId));
   }
 
   async getCycle(id: number): Promise<Cycle | undefined> {
-    return this.cycles.get(id);
+    const [cycle] = await db.select().from(cycles).where(eq(cycles.id, id));
+    return cycle || undefined;
   }
 
   async createCycle(insertCycle: InsertCycle): Promise<Cycle> {
-    const id = this.currentId++;
-    const cycle: Cycle = { 
-      ...insertCycle, 
-      id,
-      length: insertCycle.length || null,
-      endDate: insertCycle.endDate || null,
-      isActive: insertCycle.isActive ?? null
-    };
-    this.cycles.set(id, cycle);
+    const [cycle] = await db
+      .insert(cycles)
+      .values(insertCycle)
+      .returning();
     return cycle;
   }
 
-  async updateCycle(id: number, cycle: Partial<InsertCycle>): Promise<Cycle | undefined> {
-    const existingCycle = this.cycles.get(id);
-    if (!existingCycle) return undefined;
-    
-    const updatedCycle = { ...existingCycle, ...cycle };
-    this.cycles.set(id, updatedCycle);
-    return updatedCycle;
+  async updateCycle(id: number, cycleUpdates: Partial<InsertCycle>): Promise<Cycle | undefined> {
+    const [cycle] = await db
+      .update(cycles)
+      .set(cycleUpdates)
+      .where(eq(cycles.id, id))
+      .returning();
+    return cycle || undefined;
   }
 
   async getActiveCycle(userId: number): Promise<Cycle | undefined> {
-    return Array.from(this.cycles.values()).find(
-      cycle => cycle.userId === userId && cycle.isActive
+    const [cycle] = await db.select().from(cycles).where(
+      and(eq(cycles.userId, userId), eq(cycles.isActive, true))
     );
+    return cycle || undefined;
   }
 
   async getDailyLogs(userId: number, startDate?: string, endDate?: string): Promise<DailyLog[]> {
-    let logs = Array.from(this.dailyLogs.values()).filter(log => log.userId === userId);
+    const conditions = [eq(dailyLogs.userId, userId)];
+    if (startDate) conditions.push(gte(dailyLogs.date, startDate));
+    if (endDate) conditions.push(lte(dailyLogs.date, endDate));
     
-    if (startDate) {
-      logs = logs.filter(log => log.date >= startDate);
-    }
-    if (endDate) {
-      logs = logs.filter(log => log.date <= endDate);
-    }
-    
-    return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return await db.select().from(dailyLogs).where(and(...conditions));
   }
 
   async getDailyLog(userId: number, date: string): Promise<DailyLog | undefined> {
-    return Array.from(this.dailyLogs.values()).find(
-      log => log.userId === userId && log.date === date
+    const [log] = await db.select().from(dailyLogs).where(
+      and(eq(dailyLogs.userId, userId), eq(dailyLogs.date, date))
     );
+    return log || undefined;
   }
 
   async createDailyLog(insertLog: InsertDailyLog): Promise<DailyLog> {
-    const id = this.currentId++;
-    const log: DailyLog = { 
-      ...insertLog, 
-      id,
-      waterIntake: insertLog.waterIntake ?? null,
-      mood: insertLog.mood || null,
-      symptoms: insertLog.symptoms || null,
-      notes: insertLog.notes || null
-    };
-    this.dailyLogs.set(id, log);
+    const [log] = await db
+      .insert(dailyLogs)
+      .values(insertLog)
+      .returning();
     return log;
   }
 
-  async updateDailyLog(id: number, log: Partial<InsertDailyLog>): Promise<DailyLog | undefined> {
-    const existingLog = this.dailyLogs.get(id);
-    if (!existingLog) return undefined;
-    
-    const updatedLog = { ...existingLog, ...log };
-    this.dailyLogs.set(id, updatedLog);
-    return updatedLog;
+  async updateDailyLog(id: number, logUpdates: Partial<InsertDailyLog>): Promise<DailyLog | undefined> {
+    const [log] = await db
+      .update(dailyLogs)
+      .set(logUpdates)
+      .where(eq(dailyLogs.id, id))
+      .returning();
+    return log || undefined;
   }
 
   async getPrediction(userId: number): Promise<Prediction | undefined> {
-    return Array.from(this.predictions.values()).find(p => p.userId === userId);
+    const [prediction] = await db.select().from(predictions).where(eq(predictions.userId, userId));
+    return prediction || undefined;
   }
 
   async createPrediction(insertPrediction: InsertPrediction): Promise<Prediction> {
-    const id = this.currentId++;
-    const prediction: Prediction = { 
-      ...insertPrediction, 
-      id,
-      ovulationDate: insertPrediction.ovulationDate || null,
-      fertileWindowStart: insertPrediction.fertileWindowStart || null,
-      fertileWindowEnd: insertPrediction.fertileWindowEnd || null,
-      averageCycleLength: insertPrediction.averageCycleLength ?? null,
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
-    this.predictions.set(id, prediction);
+    const [prediction] = await db
+      .insert(predictions)
+      .values(insertPrediction)
+      .returning();
     return prediction;
   }
 
-  async updatePrediction(userId: number, prediction: Partial<InsertPrediction>): Promise<Prediction | undefined> {
-    const existing = Array.from(this.predictions.values()).find(p => p.userId === userId);
-    if (!existing) return undefined;
-    
-    const updated = { 
-      ...existing, 
-      ...prediction,
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
-    this.predictions.set(existing.id, updated);
-    return updated;
+  async updatePrediction(userId: number, predictionUpdates: Partial<InsertPrediction>): Promise<Prediction | undefined> {
+    const [prediction] = await db
+      .update(predictions)
+      .set(predictionUpdates)
+      .where(eq(predictions.userId, userId))
+      .returning();
+    return prediction || undefined;
   }
 
   async getJournalEntries(userId: number): Promise<JournalEntry[]> {
-    return Array.from(this.journalEntries.values())
-      .filter(entry => entry.userId === userId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return await db.select().from(journalEntries).where(eq(journalEntries.userId, userId));
   }
 
   async getJournalEntry(id: number): Promise<JournalEntry | undefined> {
-    return this.journalEntries.get(id);
+    const [entry] = await db.select().from(journalEntries).where(eq(journalEntries.id, id));
+    return entry || undefined;
   }
 
   async createJournalEntry(insertEntry: InsertJournalEntry): Promise<JournalEntry> {
-    const id = this.currentId++;
-    const entry: JournalEntry = { 
-      ...insertEntry, 
-      id,
-      title: insertEntry.title || null,
-      mood: insertEntry.mood || null,
-      tags: insertEntry.tags || null
-    };
-    this.journalEntries.set(id, entry);
+    const [entry] = await db
+      .insert(journalEntries)
+      .values(insertEntry)
+      .returning();
     return entry;
   }
 
-  async updateJournalEntry(id: number, entry: Partial<InsertJournalEntry>): Promise<JournalEntry | undefined> {
-    const existing = this.journalEntries.get(id);
-    if (!existing) return undefined;
-    
-    const updated = { ...existing, ...entry };
-    this.journalEntries.set(id, updated);
-    return updated;
+  async updateJournalEntry(id: number, entryUpdates: Partial<InsertJournalEntry>): Promise<JournalEntry | undefined> {
+    const [entry] = await db
+      .update(journalEntries)
+      .set(entryUpdates)
+      .where(eq(journalEntries.id, id))
+      .returning();
+    return entry || undefined;
   }
 
   async deleteJournalEntry(id: number): Promise<boolean> {
-    return this.journalEntries.delete(id);
+    const result = await db.delete(journalEntries).where(eq(journalEntries.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getUserSettings(userId: number): Promise<UserSettings | undefined> {
-    return Array.from(this.userSettings.values()).find(s => s.userId === userId);
+    const [settings] = await db.select().from(userSettings).where(eq(userSettings.userId, userId));
+    return settings || undefined;
   }
 
   async createUserSettings(insertSettings: InsertUserSettings): Promise<UserSettings> {
-    const id = this.currentId++;
-    const settings: UserSettings = { 
-      ...insertSettings, 
-      id,
-      notificationsEnabled: insertSettings.notificationsEnabled ?? null,
-      reminderDays: insertSettings.reminderDays ?? null,
-      waterGoal: insertSettings.waterGoal ?? null,
-      theme: insertSettings.theme || null
-    };
-    this.userSettings.set(id, settings);
+    const [settings] = await db
+      .insert(userSettings)
+      .values(insertSettings)
+      .returning();
     return settings;
   }
 
-  async updateUserSettings(userId: number, settings: Partial<InsertUserSettings>): Promise<UserSettings | undefined> {
-    const existing = Array.from(this.userSettings.values()).find(s => s.userId === userId);
-    if (!existing) return undefined;
-    
-    const updated = { ...existing, ...settings };
-    this.userSettings.set(existing.id, updated);
-    return updated;
+  async updateUserSettings(userId: number, settingsUpdates: Partial<InsertUserSettings>): Promise<UserSettings | undefined> {
+    const [settings] = await db
+      .update(userSettings)
+      .set(settingsUpdates)
+      .where(eq(userSettings.userId, userId))
+      .returning();
+    return settings || undefined;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

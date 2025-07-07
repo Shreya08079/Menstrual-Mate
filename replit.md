@@ -121,6 +121,7 @@ The application is designed to be deployed as a single Node.js process serving b
 ```
 Changelog:
 - July 07, 2025. Initial setup
+- July 07, 2025. Added PostgreSQL database integration with full DatabaseStorage implementation
 ```
 
 ## User Preferences
