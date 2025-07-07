@@ -53,6 +53,10 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
   const totalWaterMl = dailyLog?.waterIntake || 0;
   const waterGoalMl = 3000; // 3L goal in ml
   const mood = dailyLog?.mood;
+  
+  // Debug the current state
+  console.log("Current dailyLog:", dailyLog);
+  console.log("Current water:", totalWaterMl, "Current mood:", mood);
 
   // Close dropdown when clicking outside
   useEffect(() => {
