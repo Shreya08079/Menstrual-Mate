@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Plus, FileText } from "lucide-react";
 import { Header } from "@/components/layout/header";
@@ -16,6 +16,7 @@ import type { Cycle, DailyLog, Prediction } from "@shared/schema";
 export default function Home() {
   const { user } = useAuth();
   const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
+  const dailyTrackingRef = useRef<HTMLDivElement>(null);
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -76,6 +77,14 @@ export default function Home() {
     await updateDailyLogMutation.mutateAsync(updates);
   };
 
+  const handleLogSymptomsClick = () => {
+    // Scroll to daily tracking section
+    dailyTrackingRef.current?.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-brand-gray">
       <Header />
@@ -110,6 +119,7 @@ export default function Home() {
           
           <Button
             variant="outline"
+            onClick={handleLogSymptomsClick}
             className="rounded-xl p-4 h-auto flex flex-col items-center space-y-2 border-gray-200 hover:bg-gray-50"
           >
             <FileText className="text-brand-pink" size={20} />
@@ -121,10 +131,12 @@ export default function Home() {
         <CalendarView cycles={cycles} activeCycle={activeCycle} />
 
         {/* Daily Tracking */}
-        <DailyTracking
-          dailyLog={todayLog}
-          onUpdateLog={handleLogUpdate}
-        />
+        <div ref={dailyTrackingRef}>
+          <DailyTracking
+            dailyLog={todayLog}
+            onUpdateLog={handleLogUpdate}
+          />
+        </div>
 
         {/* Health Tips */}
         <HealthTips symptoms={todayLog?.symptoms || []} />
