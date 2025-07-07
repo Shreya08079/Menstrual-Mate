@@ -16,15 +16,21 @@ class WebNotificationService implements NotificationService {
       return false;
     }
 
+    console.log('Current notification permission:', Notification.permission);
+
     if (Notification.permission === 'granted') {
+      console.log('Notification permission already granted');
       return true;
     }
 
     if (Notification.permission !== 'denied') {
+      console.log('Requesting notification permission...');
       const permission = await Notification.requestPermission();
+      console.log('Permission result:', permission);
       return permission === 'granted';
     }
 
+    console.log('Notification permission denied');
     return false;
   }
 
@@ -33,41 +39,48 @@ class WebNotificationService implements NotificationService {
     
     const reminderMessages = [
       "💧 Stay hydrated! Time for some water 🌊",
-      "🚰 Don't forget to drink water! Your body needs it ✨",
+      "🚰 Don't forget to drink water! Your body needs it ✨", 
       "💦 Water break time! Keep that glow going 💫",
       "🌊 Hydration check! Drink some water to feel amazing 💙",
       "💧 Your skin will thank you! Time for water 🌸",
       "🚰 Stay healthy and hydrated! Water time 🌿"
     ];
 
-    // Schedule reminders every hour (3600000 ms)
+    console.log('Scheduling water reminders...');
+
+    // Schedule reminders every hour (3600000 ms) - for testing, use 10 seconds
     const reminderInterval = setInterval(() => {
+      console.log('Checking notification permission for reminder...');
       if (Notification.permission === 'granted') {
         const randomMessage = reminderMessages[Math.floor(Math.random() * reminderMessages.length)];
+        console.log('Sending notification:', randomMessage);
         new Notification('Hydration Reminder', {
           body: randomMessage,
-          icon: '/water-icon.png', // Add a water icon to public folder
-          badge: '/water-badge.png',
           tag: 'water-reminder',
           requireInteraction: false,
           silent: false
         });
+      } else {
+        console.log('Notification permission not granted:', Notification.permission);
       }
-    }, 3600000); // 1 hour = 3600000 ms
+    }, 10000); // 10 seconds for testing, change back to 3600000 for production
 
     this.reminderIntervals.push(reminderInterval);
+    console.log('Water reminder scheduled');
   }
 
   showGoalReachedNotification(): void {
+    console.log('Attempting to show goal reached notification...');
     if (Notification.permission === 'granted') {
+      console.log('Showing goal achieved notification');
       new Notification('Hydration Goal Achieved! 🎉', {
         body: '🏆 Amazing! You\'ve reached your 3L water goal today! Keep up the great work! 💪✨',
-        icon: '/celebration-icon.png',
-        badge: '/achievement-badge.png',
         tag: 'goal-reached',
         requireInteraction: true,
         silent: false
       });
+    } else {
+      console.log('Cannot show notification - permission not granted:', Notification.permission);
     }
   }
 
