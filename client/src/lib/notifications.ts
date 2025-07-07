@@ -63,7 +63,7 @@ class WebNotificationService implements NotificationService {
       } else {
         console.log('Notification permission not granted:', Notification.permission);
       }
-    }, 10000); // 10 seconds for testing, change back to 3600000 for production
+    }, 3600000); // 1 hour = 3600000 ms
 
     this.reminderIntervals.push(reminderInterval);
     console.log('Water reminder scheduled');

@@ -18,7 +18,9 @@ export function Header() {
           <div className="w-8 h-8 bg-gradient-to-r from-brand-pink to-brand-purple rounded-full flex items-center justify-center">
             <Heart className="text-white" size={16} />
           </div>
-          <h1 className="text-xl font-semibold text-gray-800">PeriodCare</h1>
+          <h1 className="text-2xl font-black bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent tracking-tight">
+            PeriodCare
+          </h1>
         </div>
         
         <div className="flex items-center space-x-4">

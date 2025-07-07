@@ -119,7 +119,7 @@ export function CalendarView({ cycles, activeCycle, onDateClick }: CalendarViewP
     "July", "August", "September", "October", "November", "December"
   ];
   
-  const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">

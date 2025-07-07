@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/header";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { CycleOverview } from "@/components/cycle/cycle-overview";
 import { CalendarView } from "@/components/cycle/calendar-view";
-import { DailyTracking } from "@/components/tracking/daily-tracking";
+import { DailyTrackingEnhanced } from "@/components/tracking/daily-tracking-enhanced";
 import { HealthTips } from "@/components/tracking/health-tips";
 import { PeriodLogModal } from "@/components/modals/period-log-modal";
 import { Button } from "@/components/ui/button";
@@ -150,7 +150,7 @@ export default function Home() {
 
         {/* Daily Tracking */}
         <div ref={dailyTrackingRef}>
-          <DailyTracking
+          <DailyTrackingEnhanced
             dailyLog={todayLog}
             onUpdateLog={handleLogUpdate}
             isUpdating={updateDailyLogMutation.isPending}
