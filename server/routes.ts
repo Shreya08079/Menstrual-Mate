@@ -156,8 +156,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.userId);
       const date = req.params.date;
       const log = await storage.getDailyLog(userId, date);
-      res.json(log);
+      console.log(`Daily log query for user ${userId}, date ${date}:`, log);
+      res.json(log || null);
     } catch (error) {
+      console.error("Error fetching daily log:", error);
       res.status(500).json({ message: "Server error" });
     }
   });

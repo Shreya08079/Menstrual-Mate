@@ -27,13 +27,8 @@ export default function Home() {
   });
 
   // Fetch today's log
-  const { data: todayLog } = useQuery<DailyLog>({
-    queryKey: ['/api/daily-logs', user?.id, today],
-    queryFn: async () => {
-      const log = await apiRequest('GET', `/api/daily-logs/${user?.id}/${today}`);
-      console.log("Fetched log for today:", log);
-      return log;
-    },
+  const { data: todayLog } = useQuery<DailyLog | null>({
+    queryKey: [`/api/daily-logs/${user?.id}/${today}`],
     enabled: !!user,
   });
 
@@ -63,12 +58,15 @@ export default function Home() {
     mutationFn: async (updates: Partial<DailyLog>) => {
       console.log("Mutation called with updates:", updates);
       console.log("Current todayLog in mutation:", todayLog);
+      console.log("todayLog has id?", todayLog?.id);
       
-      if (todayLog) {
+      if (todayLog && todayLog.id) {
         // Update existing log
+        console.log("Updating existing log with id:", todayLog.id);
         return apiRequest('PATCH', `/api/daily-logs/${todayLog.id}`, updates);
       } else {
         // Create new log
+        console.log("Creating new log");
         return apiRequest('POST', '/api/daily-logs', {
           userId: user?.id,
           date: today,

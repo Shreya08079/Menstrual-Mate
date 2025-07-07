@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { getHealthRecommendations } from "@/lib/health-recommendations";
+import { useWaterReminders } from "@/lib/notifications";
 import type { DailyLog } from "@shared/schema";
 
 interface DailyTrackingProps {
@@ -53,6 +54,9 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
   const totalWaterMl = dailyLog?.waterIntake || 0;
   const waterGoalMl = 3000; // 3L goal in ml
   const mood = dailyLog?.mood;
+  
+  // Water reminder notifications
+  useWaterReminders(totalWaterMl, waterGoalMl);
   
   // Debug the current state
   console.log("Current dailyLog:", dailyLog);
