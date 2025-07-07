@@ -112,6 +112,7 @@ export default function Home() {
             isOpen={isPeriodModalOpen}
             onClose={() => setIsPeriodModalOpen(false)}
             onSave={handlePeriodSave}
+            onOpen={() => setIsPeriodModalOpen(true)}
           >
             <Button className="btn-primary text-white rounded-xl p-4 h-auto flex flex-col items-center space-y-2">
               <Plus size={20} />

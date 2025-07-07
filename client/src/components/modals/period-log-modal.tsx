@@ -15,10 +15,11 @@ interface PeriodLogModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: { startDate: string; endDate?: string }) => void;
+  onOpen: () => void;
   children: React.ReactNode;
 }
 
-export function PeriodLogModal({ isOpen, onClose, onSave, children }: PeriodLogModalProps) {
+export function PeriodLogModal({ isOpen, onClose, onSave, onOpen, children }: PeriodLogModalProps) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   
@@ -38,10 +39,11 @@ export function PeriodLogModal({ isOpen, onClose, onSave, children }: PeriodLogM
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogTrigger asChild>
+    <>
+      <div onClick={onOpen}>
         {children}
-      </DialogTrigger>
+      </div>
+      <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
@@ -106,5 +108,6 @@ export function PeriodLogModal({ isOpen, onClose, onSave, children }: PeriodLogM
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
