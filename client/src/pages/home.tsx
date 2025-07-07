@@ -75,6 +75,8 @@ export default function Home() {
       }
     },
     onSuccess: () => {
+      console.log("Mutation successful, invalidating queries");
+      queryClient.invalidateQueries({ queryKey: [`/api/daily-logs/${user?.id}/${today}`] });
       queryClient.invalidateQueries({ queryKey: ['/api/daily-logs'] });
     },
   });
@@ -85,8 +87,9 @@ export default function Home() {
     await createCycleMutation.mutateAsync(data);
   };
 
-  const handleLogUpdate = async (updates: Partial<DailyLog>) => {
-    await updateDailyLogMutation.mutateAsync(updates);
+  const handleLogUpdate = (updates: Partial<DailyLog>) => {
+    console.log("handleLogUpdate called with:", updates);
+    updateDailyLogMutation.mutate(updates);
   };
 
   const handleLogSymptomsClick = () => {
@@ -150,6 +153,7 @@ export default function Home() {
           <DailyTracking
             dailyLog={todayLog}
             onUpdateLog={handleLogUpdate}
+            isUpdating={updateDailyLogMutation.isPending}
           />
         </div>
 

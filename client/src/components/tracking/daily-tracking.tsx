@@ -10,6 +10,7 @@ interface DailyTrackingProps {
   dailyLog?: DailyLog;
   waterGoal?: number;
   onUpdateLog: (updates: Partial<DailyLog>) => void;
+  isUpdating?: boolean;
 }
 
 const glassOptions = [
@@ -40,7 +41,7 @@ const symptoms = [
   "acne"
 ];
 
-export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTrackingProps) {
+export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog, isUpdating = false }: DailyTrackingProps) {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(
     dailyLog?.symptoms || []
   );
@@ -92,6 +93,10 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
   
   const selectMood = (moodValue: string) => {
     console.log("Mood selected:", moodValue);
+    console.log("Current mood before change:", mood);
+    console.log("About to call onUpdateLog with mood:", moodValue);
+    
+    // Allow changing mood even if it's the same value (for testing purposes)
     onUpdateLog({ mood: moodValue });
   };
 
@@ -210,11 +215,12 @@ export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTr
             <button
               key={moodOption.value}
               onClick={() => selectMood(moodOption.value)}
+              disabled={isUpdating}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors text-2xl ${
                 mood === moodOption.value
                   ? "bg-yellow-200 ring-2 ring-yellow-400"
                   : "bg-gray-100 hover:bg-gray-200"
-              }`}
+              } ${isUpdating ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {moodOption.emoji}
             </button>
