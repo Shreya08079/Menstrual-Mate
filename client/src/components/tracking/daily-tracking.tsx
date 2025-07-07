@@ -1,7 +1,8 @@
-import { Plus, Check } from "lucide-react";
+import { Plus, Check, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { getHealthRecommendations } from "@/lib/health-recommendations";
 import type { DailyLog } from "@shared/schema";
 
 interface DailyTrackingProps {
@@ -57,6 +58,7 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
   };
   
   const waterPercentage = (waterIntake / waterGoal) * 100;
+  const recommendations = getHealthRecommendations(selectedSymptoms);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
@@ -109,7 +111,7 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
       </div>
 
       {/* Symptoms */}
-      <div>
+      <div className="mb-6">
         <p className="font-medium text-gray-800 mb-3">Symptoms</p>
         <div className="grid grid-cols-2 gap-2">
           {symptoms.map((symptom) => {
@@ -134,6 +136,37 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
           })}
         </div>
       </div>
+
+      {/* Health Recommendations */}
+      {recommendations.length > 0 && (
+        <div className="border-t pt-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <Lightbulb className="text-yellow-500" size={20} />
+            <p className="font-medium text-gray-800">Health Tips for You</p>
+          </div>
+          <div className="space-y-3">
+            {recommendations.map((tip) => (
+              <div
+                key={tip.id}
+                className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4"
+              >
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <Lightbulb size={16} className="text-yellow-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-800 mb-1">{tip.title}</h4>
+                    <p className="text-sm text-gray-600 leading-relaxed">{tip.description}</p>
+                    <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
+                      {tip.category}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
