@@ -39,17 +39,19 @@ const symptoms = [
   "acne"
 ];
 
-export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTrackingProps) {
+export function DailyTracking({ dailyLog, waterGoal = 12, onUpdateLog }: DailyTrackingProps) {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(
     dailyLog?.symptoms || []
   );
   const [selectedGlassSize, setSelectedGlassSize] = useState(250); // Default 250ml
   const [showGlassOptions, setShowGlassOptions] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [hasShownCelebration, setHasShownCelebration] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Convert waterIntake from glasses to ml (assuming 250ml per glass if stored as glasses)
   const totalWaterMl = dailyLog?.waterIntake ? dailyLog.waterIntake * 250 : 0;
-  const waterGoalMl = waterGoal * 250; // Goal in ml
+  const waterGoalMl = 3000; // 3L goal in ml
   const mood = dailyLog?.mood;
 
   // Close dropdown when clicking outside
@@ -71,6 +73,13 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
     const newTotalMl = totalWaterMl + selectedGlassSize;
     const newGlassCount = Math.round(newTotalMl / 250); // Convert back to glasses for storage
     onUpdateLog({ waterIntake: newGlassCount });
+    
+    // Check if goal is achieved and show celebration
+    if (newTotalMl >= waterGoalMl && !hasShownCelebration) {
+      setShowCelebration(true);
+      setHasShownCelebration(true);
+      setTimeout(() => setShowCelebration(false), 4000); // Hide after 4 seconds
+    }
   };
   
   const selectMood = (moodValue: string) => {
@@ -90,8 +99,9 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
   const recommendations = getHealthRecommendations(selectedSymptoms);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Tracking</h3>
+    <>
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Today's Tracking</h3>
       
       {/* Water Intake */}
       <div className="mb-6">
@@ -163,9 +173,9 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
           )}
         </div>
         
-        <Progress value={waterPercentage} className="h-2" />
+        <Progress value={Math.min(waterPercentage, 100)} className="h-2" />
         <p className="text-xs text-gray-500 mt-1">
-          {waterPercentage >= 100 ? "Goal achieved! 🎉" : `${Math.round(100 - waterPercentage)}% remaining`}
+          {waterPercentage >= 100 ? "Goal achieved! 🎉" : `${Math.round(waterGoalMl - totalWaterMl)}ml remaining`}
         </p>
       </div>
 
@@ -246,6 +256,66 @@ export function DailyTracking({ dailyLog, waterGoal = 8, onUpdateLog }: DailyTra
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* Full-Screen Celebration Overlay */}
+      {showCelebration && (
+        <div 
+          className="fixed inset-0 bg-gradient-to-br from-pink-400 via-purple-500 to-blue-600 flex items-center justify-center z-50 animate-in fade-in duration-500 cursor-pointer"
+          onClick={() => setShowCelebration(false)}
+        >
+          <div className="text-center text-white relative">
+            {/* Confetti Animation */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(20)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute animate-bounce"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 2}s`,
+                    animationDuration: `${1 + Math.random() * 2}s`
+                  }}
+                >
+                  {['🎉', '✨', '🌟', '💖', '🎊', '🎈'][Math.floor(Math.random() * 6)]}
+                </div>
+              ))}
+            </div>
+            
+            {/* Main Message */}
+            <div className="relative z-10 max-w-lg mx-auto px-8">
+              <div className="text-8xl mb-4 animate-pulse">🎉</div>
+              <h1 className="text-6xl font-bold mb-4 animate-bounce">
+                HURRAY!
+              </h1>
+              <h2 className="text-3xl font-semibold mb-6">
+                Way to go, girl! 💪
+              </h2>
+              <div className="text-2xl mb-4">
+                You achieved your 3L water goal! 💧
+              </div>
+              <div className="text-lg opacity-90 mb-8">
+                Your body will thank you for staying so well hydrated today!
+              </div>
+              
+              {/* Animated Trophy */}
+              <div className="text-6xl mb-6 animate-bounce">🏆</div>
+              
+              {/* Sparkle Effects */}
+              <div className="flex justify-center space-x-4 text-4xl">
+                <span className="animate-pulse">✨</span>
+                <span className="animate-bounce">🌟</span>
+                <span className="animate-pulse">✨</span>
+              </div>
+              
+              <p className="text-sm mt-8 opacity-75">
+                Tap anywhere to continue...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
