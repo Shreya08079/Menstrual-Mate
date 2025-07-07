@@ -98,11 +98,13 @@ export default function Home() {
           <p className="text-gray-600">You've got this! 💪</p>
         </div>
 
-        {/* Cycle Overview */}
-        <CycleOverview 
-          activeCycle={activeCycle}
-          averageCycleLength={prediction?.averageCycleLength}
-        />
+        {/* Cycle Overview - Only show if user has logged at least one period */}
+        {cycles.length > 0 && (
+          <CycleOverview 
+            activeCycle={activeCycle}
+            averageCycleLength={prediction?.averageCycleLength}
+          />
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-4 mb-6">
