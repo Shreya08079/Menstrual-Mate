@@ -65,6 +65,8 @@ export const userSettings = pgTable("user_settings", {
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+}).extend({
+  profilePicture: z.string().optional(),
 });
 
 export const insertCycleSchema = createInsertSchema(cycles).omit({

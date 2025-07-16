@@ -14,6 +14,7 @@ import Profile from "@/pages/profile";
 import Journal from "@/pages/journal";
 import AIAssistant from "@/pages/ai-assistant";
 import Exercises from "@/pages/exercises";
+import Settings from "@/pages/settings";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/journal" component={() => <ProtectedRoute component={Journal} />} />
       <Route path="/ai-assistant" component={() => <ProtectedRoute component={AIAssistant} />} />
       <Route path="/exercises" component={() => <ProtectedRoute component={Exercises} />} />
+      <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
       <Route component={NotFound} />
     </Switch>
   );

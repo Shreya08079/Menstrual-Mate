@@ -53,8 +53,11 @@
   * {
     @apply border-border;
   }
+  html {
+    @apply bg-background text-foreground dark:bg-gray-900;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground dark:bg-gray-900;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Heart, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -31,7 +32,26 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.password !== formData.confirmPassword) {
+    // Trim all fields
+    const trimmedData = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      username: formData.username.trim(),
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    };
+
+    // Check for empty required fields
+    if (!trimmedData.name || !trimmedData.email || !trimmedData.username || !trimmedData.password || !trimmedData.confirmPassword) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (trimmedData.password !== trimmedData.confirmPassword) {
       toast({
         title: "Passwords don't match",
         description: "Please make sure your passwords match.",
@@ -40,7 +60,7 @@ export default function Register() {
       return;
     }
 
-    if (formData.password.length < 8) {
+    if (trimmedData.password.length < 8) {
       toast({
         title: "Password too short",
         description: "Password must be at least 8 characters long.",
@@ -53,15 +73,19 @@ export default function Register() {
 
     try {
       await register({
-        name: formData.name,
-        email: formData.email,
-        username: formData.username,
-        password: formData.password,
+        name: trimmedData.name,
+        email: trimmedData.email,
+        username: trimmedData.username,
+        password: trimmedData.password,
       });
       toast({
         title: "Welcome to PeriodCare!",
         description: "Your account has been created successfully.",
       });
+      // Redirect to home page after successful registration
+      setTimeout(() => {
+        setLocation("/");
+      }, 1000);
     } catch (error: any) {
       toast({
         title: "Registration failed",

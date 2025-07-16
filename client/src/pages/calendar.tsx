@@ -16,7 +16,7 @@ export default function Calendar() {
   const activeCycle = cycles.find(cycle => cycle.isActive);
 
   return (
-    <div className="min-h-screen bg-brand-gray">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-100 to-pink-200 dark:bg-gray-900">
       <Header />
       
       <main className="max-w-md mx-auto px-4 py-6 pb-24">

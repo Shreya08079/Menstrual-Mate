@@ -5,10 +5,13 @@ export interface NotificationService {
   scheduleWaterReminders(): void;
   showGoalReachedNotification(): void;
   clearWaterReminders(): void;
+  scheduleExerciseReminders(): void;
+  clearExerciseReminders(): void;
 }
 
 class WebNotificationService implements NotificationService {
   private reminderIntervals: NodeJS.Timeout[] = [];
+  private exerciseReminderIntervals: NodeJS.Timeout[] = [];
 
   async requestPermission(): Promise<boolean> {
     if (!('Notification' in window)) {
@@ -88,6 +91,36 @@ class WebNotificationService implements NotificationService {
     this.reminderIntervals.forEach(interval => clearInterval(interval));
     this.reminderIntervals = [];
   }
+
+  scheduleExerciseReminders(): void {
+    this.clearExerciseReminders();
+    const exerciseMessages = [
+      "🏃‍♀️ Time to move! Try a quick stretch or walk.",
+      "🤸‍♂️ Exercise break! A little movement goes a long way.",
+      "🧘‍♀️ Take a moment for some deep breathing or yoga.",
+      "💪 Boost your energy! Do a few squats or dance to your favorite song.",
+      "🚶‍♀️ Step away from your screen and move your body!"
+    ];
+    // Every 3 hours (10800000 ms) - for testing, use 30 seconds
+    const exerciseInterval = setInterval(() => {
+      if (Notification.permission === 'granted') {
+        const randomMessage = exerciseMessages[Math.floor(Math.random() * exerciseMessages.length)];
+        new Notification('Exercise Reminder', {
+          body: randomMessage,
+          tag: 'exercise-reminder',
+          requireInteraction: false,
+          silent: false
+        });
+      }
+    }, 10800000); // 3 hours = 10800000 ms
+    this.exerciseReminderIntervals.push(exerciseInterval);
+    console.log('Exercise reminder scheduled');
+  }
+
+  clearExerciseReminders(): void {
+    this.exerciseReminderIntervals.forEach(interval => clearInterval(interval));
+    this.exerciseReminderIntervals = [];
+  }
 }
 
 export const notificationService = new WebNotificationService();
@@ -101,12 +134,14 @@ export function useWaterReminders(waterIntake: number, goalMl: number) {
     notificationService.requestPermission().then(granted => {
       if (granted) {
         notificationService.scheduleWaterReminders();
+        notificationService.scheduleExerciseReminders();
       }
     });
 
     // Clean up on unmount
     return () => {
       notificationService.clearWaterReminders();
+      notificationService.clearExerciseReminders();
     };
   }, []);
 

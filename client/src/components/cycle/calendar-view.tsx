@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { calculateCyclePredictions, getDayType } from "@/lib/cycle-calculator";
@@ -57,36 +57,68 @@ export function CalendarView({ cycles, activeCycle, onDateClick }: CalendarViewP
     cycleData = calculateCyclePredictions(new Date(activeCycle.startDate));
   }
   
+  // Helper to get the user's cycle length (default 28)
+  const userCycleLength = activeCycle?.length || 28;
+  // Find the most recent period start date
+  const lastPeriodStart = cycles.length > 0 ? new Date(cycles[cycles.length - 1].startDate) : null;
+  // Debug output
+  console.log('CalendarView cycles:', cycles);
+  console.log('CalendarView lastPeriodStart:', lastPeriodStart, 'userCycleLength:', userCycleLength);
+  console.log('CalendarView current month/year:', month + 1, year);
+  console.log('CalendarView activeCycle:', activeCycle);
+
+  // Enhanced getDayType for robust phase coloring
+  function getDayPhase(date: Date): string {
+    if (!lastPeriodStart) {
+      console.log('getDayPhase: No lastPeriodStart, returning normal for date:', date.toDateString());
+      return "normal";
+    }
+    // Calculate days since last period
+    const diff = Math.floor((date.getTime() - lastPeriodStart.getTime()) / (1000 * 60 * 60 * 24));
+    const dayInCycle = ((diff % userCycleLength) + userCycleLength) % userCycleLength;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    // Predicted next period window
+    const predictedStart = userCycleLength;
+    const predictedEnd = userCycleLength + 4;
+    // If the date is in the future, use predicted color for period days
+    if (date > today) {
+      if (dayInCycle >= 0 && dayInCycle < 5) return "predicted"; // future period as predicted
+    }
+    // Prioritize: ovulation > period > fertile > predicted
+    if (dayInCycle === 13) return "ovulation"; // blue
+    if (dayInCycle >= 0 && dayInCycle < 5) return "period"; // red/pink
+    if (dayInCycle >= 8 && dayInCycle < 14) return "fertile"; // green
+    if (dayInCycle >= predictedStart && dayInCycle < predictedEnd) return "predicted"; // orange
+    return "normal";
+  }
+
   const renderDay = (day: number) => {
     const date = new Date(year, month, day);
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
-    
-    let dayType = "normal";
-    if (cycleData) {
-      dayType = getDayType(date, cycleData, periodDates);
-    }
-    
-    let dayClasses = "aspect-square flex items-center justify-center text-sm rounded-lg cursor-pointer transition-colors ";
-    
+    let dayType = getDayPhase(date);
+    // Use soft, girlish pastel colors
+    let dayClasses = "w-9 h-9 aspect-square flex items-center justify-center text-sm rounded-full cursor-pointer transition-colors mx-auto ";
     if (isToday) {
-      dayClasses += "ring-2 ring-brand-pink ";
+      dayClasses += "ring-4 ring-pink-200 shadow-pink-100 shadow-lg ";
     }
-    
     switch (dayType) {
       case "period":
-        dayClasses += "period-day text-white font-medium ";
+        dayClasses += "bg-pink-200 text-pink-800 "; // light pink
         break;
       case "fertile":
-        dayClasses += "fertile-day text-white font-medium ";
+        dayClasses += "bg-purple-200 text-purple-800 "; // light purple
+        break;
+      case "ovulation":
+        dayClasses += "bg-pink-700 text-white "; // dark pink
         break;
       case "predicted":
-        dayClasses += "predicted-day text-gray-700 font-medium ";
+        dayClasses += "bg-red-200 text-red-700 "; // lightish red
         break;
       default:
-        dayClasses += "hover:bg-gray-100 ";
+        dayClasses += "bg-transparent text-gray-900 ";
     }
-    
     return (
       <button
         key={day}
@@ -122,9 +154,10 @@ export function CalendarView({ cycles, activeCycle, onDateClick }: CalendarViewP
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <div className="bg-gradient-to-br from-pink-50 via-white to-pink-100 rounded-3xl shadow-lg p-7 mb-8 border-2 border-pink-100">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3 className="flex items-center gap-2 text-xl font-extrabold text-pink-600 font-[cursive, 'Comic Sans MS', 'Quicksand', 'Poppins', 'sans-serif']">
+          <Heart size={20} className="text-pink-400 mr-1" />
           {monthNames[month]} {year}
         </h3>
         <div className="flex space-x-2">
@@ -132,7 +165,7 @@ export function CalendarView({ cycles, activeCycle, onDateClick }: CalendarViewP
             variant="ghost"
             size="sm"
             onClick={previousMonth}
-            className="p-2 hover:bg-gray-100"
+            className="p-2 hover:bg-pink-100 dark:hover:bg-gray-700 rounded-full"
           >
             <ChevronLeft size={16} />
           </Button>
@@ -140,7 +173,7 @@ export function CalendarView({ cycles, activeCycle, onDateClick }: CalendarViewP
             variant="ghost"
             size="sm"
             onClick={nextMonth}
-            className="p-2 hover:bg-gray-100"
+            className="p-2 hover:bg-pink-100 dark:hover:bg-gray-700 rounded-full"
           >
             <ChevronRight size={16} />
           </Button>
@@ -150,7 +183,7 @@ export function CalendarView({ cycles, activeCycle, onDateClick }: CalendarViewP
       {/* Week day headers */}
       <div className="grid grid-cols-7 gap-1 mb-4">
         {weekDays.map((day) => (
-          <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+          <div key={day} className="text-center text-xs font-bold text-pink-400 font-[cursive, 'Comic Sans MS', 'Quicksand', 'Poppins', 'sans-serif'] py-2 tracking-wide">
             {day}
           </div>
         ))}
@@ -164,16 +197,20 @@ export function CalendarView({ cycles, activeCycle, onDateClick }: CalendarViewP
       {/* Legend */}
       <div className="flex items-center justify-center space-x-6 mt-6 text-xs">
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 period-day rounded-full"></div>
-          <span className="text-gray-600">Period</span>
+          <div className="w-3 h-3 rounded-full bg-pink-200"></div>
+          <span className="text-gray-600 dark:text-gray-300">Period</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 fertile-day rounded-full"></div>
-          <span className="text-gray-600">Fertile</span>
+          <div className="w-3 h-3 rounded-full bg-purple-200"></div>
+          <span className="text-gray-600 dark:text-gray-300">Fertile</span>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 predicted-day rounded-full"></div>
-          <span className="text-gray-600">Predicted</span>
+          <div className="w-3 h-3 rounded-full bg-pink-700"></div>
+          <span className="text-gray-600 dark:text-gray-300">Ovulation</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-3 h-3 rounded-full bg-red-200"></div>
+          <span className="text-gray-600 dark:text-gray-300">Predicted</span>
         </div>
       </div>
     </div>

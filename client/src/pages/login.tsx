@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Heart, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +27,10 @@ export default function Login() {
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
+      // Redirect to home page after successful login
+      setTimeout(() => {
+        setLocation("/");
+      }, 1000);
     } catch (error) {
       toast({
         title: "Login failed",

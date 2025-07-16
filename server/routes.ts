@@ -5,9 +5,13 @@ import { insertUserSchema, insertCycleSchema, insertDailyLogSchema, insertJourna
 import bcrypt from "bcrypt";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log("registerRoutes called");
   // Auth routes
+  console.log("Registering /api/auth/register route");
   app.post("/api/auth/register", async (req, res) => {
+    console.log("/api/auth/register handler called");
     try {
+      console.log("Register request body:", req.body);
       const userData = insertUserSchema.parse(req.body);
       
       // Check if user already exists
@@ -36,6 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { password, ...userWithoutPassword } = user;
       res.json({ user: userWithoutPassword });
     } catch (error) {
+      console.error("Registration error:", error);
       res.status(400).json({ message: "Invalid user data" });
     }
   });
